@@ -28,12 +28,16 @@ class _HomePageState extends State<HomePage> {
     try {
       User? user = FirebaseAuth.instance.currentUser;
       if (user != null) {
-        DocumentSnapshot userSnapshot = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .get();
-        setState(() {
-          userName = userSnapshot['full name'] ?? '';
+        DocumentReference userDocRef =
+            FirebaseFirestore.instance.collection('users').doc(user.uid);
+
+        // Menambahkan listener untuk mendengar perubahan data secara real-time
+        userDocRef.snapshots().listen((DocumentSnapshot userSnapshot) {
+          if (userSnapshot.exists) {
+            setState(() {
+              userName = userSnapshot['full name'] ?? '';
+            });
+          }
         });
       }
     } catch (e) {
@@ -41,16 +45,20 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  Future<void> fectDendaUser() async {
+  Future<void> fetchDendaUser() async {
     try {
       User? user = FirebaseAuth.instance.currentUser;
       if (user != null) {
-        DocumentSnapshot userSnapshot = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .get();
-        setState(() {
-          dendaUser = userSnapshot['denda'] ?? 0;
+        DocumentReference userDocRef =
+            FirebaseFirestore.instance.collection('users').doc(user.uid);
+
+        // Menambahkan listener untuk mendengar perubahan data secara real-time
+        userDocRef.snapshots().listen((DocumentSnapshot userSnapshot) {
+          if (userSnapshot.exists) {
+            setState(() {
+              dendaUser = userSnapshot['denda'] ?? 0;
+            });
+          }
         });
       }
     } catch (e) {
@@ -62,7 +70,7 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     fetchUserData();
-    fectDendaUser();
+    fetchDendaUser();
     searchController.addListener(_onSearchChanged);
   }
 
