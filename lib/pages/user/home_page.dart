@@ -394,7 +394,7 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
         ),
-        // Genre Page
+        // Kategori Page
         Column(
           children: [
             const SizedBox(height: 5),

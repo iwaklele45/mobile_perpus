@@ -99,6 +99,7 @@ class _PageAllBookState extends State<PageAllBook> {
                               bookList[index].data() as Map<String, dynamic>;
                           var author = bookData['pengarang'];
                           var coverUrl = bookData['imageUrl'];
+                          var titleBook = bookData['judul'];
 
                           return GestureDetector(
                             onTap: () {
@@ -125,7 +126,7 @@ class _PageAllBookState extends State<PageAllBook> {
                                   ),
                                   Expanded(
                                     child: ListTile(
-                                      title: Text(book['judul']),
+                                      title: Text(titleBook),
                                       subtitle: Text(
                                         'Pengarang: $author',
                                         style: TextStyle(
