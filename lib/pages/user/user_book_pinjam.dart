@@ -107,6 +107,7 @@ class _PinjamBukuState extends State<PinjamBuku> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Menghapus buku dari favorite')),
         );
+        Navigator.pop(context);
       } else {
         print('Dokumen tidak ditemukan untuk dihapus');
       }

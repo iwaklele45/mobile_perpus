@@ -60,14 +60,11 @@ class _PageFavBookState extends State<PageFavBook> {
           print('Favorite Book IDs: $judulBukuFav');
         } else {
           print('No favorite book found for the user with ID: ${user.uid}');
-          // ScaffoldMessenger.of(context).showSnackBar(
-          //   const SnackBar(content: Text('Tidak ada buku')),
-          // );
+
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Tidak ada buku')),
+            const SnackBar(content: Text('Tidak ada buku terfavorit')),
           );
 
-          // Kembali ke halaman sebelumnya
           Navigator.pop(context);
         }
       } else {
@@ -83,12 +80,11 @@ class _PageFavBookState extends State<PageFavBook> {
     super.initState();
     _searchController.addListener(_onSearchChanged);
     _initData();
-    // _fetchUserFavBook();
   }
 
   Future<void> _initData() async {
     await _fetchUserFavBook();
-    // Setelah _fetchUserFavBook selesai, panggil _fetchUserFavBookStream
+
     _fetchUserFavBookStreamController.addStream(_fetchUserFavBookStream());
   }
 
