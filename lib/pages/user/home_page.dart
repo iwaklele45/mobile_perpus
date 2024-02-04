@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,6 +9,7 @@ import 'package:mobile_perpus/pages/user/all_book_genre.dart';
 import 'package:mobile_perpus/pages/user/change_profile_user.dart';
 import 'package:mobile_perpus/pages/user/history_peminjaman.dart';
 import 'package:mobile_perpus/pages/user/login_page.dart';
+import 'package:mobile_perpus/pages/user/page_favBook_user.dart';
 import 'package:mobile_perpus/pages/user/user_book_pinjam.dart';
 
 class HomePage extends StatefulWidget {
@@ -18,11 +21,15 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   String userName = '';
+  // int favUser = 0;
+  StreamSubscription<QuerySnapshot>? _favBookSubscription;
   int dendaUser = 0;
   int currentPageIndex = 0;
   User? user = FirebaseAuth.instance.currentUser;
   TextEditingController searchController = TextEditingController();
   late List<DocumentSnapshot> genreList;
+
+  int jumlahFavBookUser = 0;
 
   Future<void> fetchUserData() async {
     try {
@@ -66,11 +73,62 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> fetchFavUser() async {
+    try {
+      _listenToFavUserChanges();
+    } catch (e) {
+      print('Error fetching user data: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _favBookSubscription?.cancel();
+  }
+
+  void _listenToFavUserChanges() {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      _favBookSubscription = FirebaseFirestore.instance
+          .collection('favBook')
+          .where('id user fav', isEqualTo: user.uid)
+          .snapshots()
+          .listen((QuerySnapshot snapshot) {
+        setState(() {
+          // Menghitung jumlah buku favorit dari user
+          jumlahFavBookUser = snapshot.size;
+        });
+      });
+    }
+  }
+
+  // Future<void> fetchFavUser() async {
+  //   try {
+  //     User? user = FirebaseAuth.instance.currentUser;
+  //     if (user != null) {
+  //       QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+  //           .collection('favBook')
+  //           .where('id user fav', isEqualTo: user.uid)
+  //           .get();
+
+  //       setState(() {
+  //         // Menghitung jumlah buku favorit dari user
+  //         jumlahFavBookUser = querySnapshot.size;
+  //       });
+  //       print(jumlahFavBookUser);
+  //     }
+  //   } catch (e) {
+  //     print('Error fetching user data: $e');
+  //   }
+  // }
+
   @override
   void initState() {
     super.initState();
     fetchUserData();
     fetchDendaUser();
+    fetchFavUser();
     searchController.addListener(_onSearchChanged);
   }
 
@@ -93,6 +151,21 @@ class _HomePageState extends State<HomePage> {
             fontSize: 20.0,
           ),
         ),
+        actions: [
+          Padding(
+              padding: const EdgeInsets.only(right: 10.0),
+              child: GestureDetector(
+                onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                    builder: (context) => const PageFavBook())),
+                child: Badge(
+                  label: Text(jumlahFavBookUser.toString()),
+                  child: const Icon(
+                    Icons.favorite,
+                    size: 30,
+                  ),
+                ),
+              )),
+        ],
       ),
       backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       bottomNavigationBar: NavigationBar(
@@ -338,7 +411,7 @@ class _HomePageState extends State<HomePage> {
                                                     ListTile(
                                                       title: Text(
                                                         book['judul'],
-                                                        style: TextStyle(
+                                                        style: const TextStyle(
                                                           fontSize: 15,
                                                         ),
                                                       ),

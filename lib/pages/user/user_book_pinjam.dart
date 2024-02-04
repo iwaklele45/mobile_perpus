@@ -17,8 +17,10 @@ class PinjamBuku extends StatefulWidget {
 }
 
 class _PinjamBukuState extends State<PinjamBuku> {
+  StreamSubscription<QuerySnapshot>? _favBookSubscription;
   String dropdownValue1 = list.first;
   String userName = '';
+  bool favBook = false;
   File? coverBook;
   User? user = FirebaseAuth.instance.currentUser;
   StreamSubscription<DocumentSnapshot>? wishlistSubscription;
@@ -44,6 +46,92 @@ class _PinjamBukuState extends State<PinjamBuku> {
     super.initState();
     _loadPreviousImage();
     fetchUserData();
+    _listenToFavBookChanges();
+  }
+
+  void _listenToFavBookChanges() {
+    try {
+      _favBookSubscription = FirebaseFirestore.instance
+          .collection('favBook')
+          .where('id book fav', isEqualTo: widget.buku.id)
+          .where('id user fav', isEqualTo: user?.uid)
+          .snapshots()
+          .listen((QuerySnapshot snapshot) {
+        setState(() {
+          favBook = snapshot.docs.isNotEmpty;
+        });
+      });
+    } catch (e) {
+      setState(() {
+        favBook = false;
+      });
+      print('Error: ${e.toString()}');
+    }
+  }
+
+  void _dispose() {
+    _favBookSubscription?.cancel();
+  }
+
+  void dispose() {
+    super.dispose();
+    _dispose();
+  }
+
+  Future<void> _addFavoriteBook() async {
+    try {
+      await FirebaseFirestore.instance.collection('favBook').add({
+        'id book fav': widget.buku.id,
+        'id user fav': user?.uid,
+        'judul buku': widget.buku['judul'],
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Menambahkan buku ke favorite')),
+      );
+    } catch (e) {
+      print(e.toString());
+    }
+  }
+
+  Future<void> _removeFavoriteBook() async {
+    try {
+      var querySnapshot = await FirebaseFirestore.instance
+          .collection('favBook')
+          .where('id book fav', isEqualTo: widget.buku.id)
+          .where('id user fav', isEqualTo: user?.uid)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        var documentReference = querySnapshot.docs.first.reference;
+        await documentReference.delete();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Menghapus buku dari favorite')),
+        );
+      } else {
+        print('Dokumen tidak ditemukan untuk dihapus');
+      }
+    } catch (e) {
+      print('Error: ${e.toString()}');
+    }
+  }
+
+  Future<void> _checkFavBook() async {
+    try {
+      var querySnapshot = await FirebaseFirestore.instance
+          .collection('favBook')
+          .where('id book fav', isEqualTo: widget.buku.id)
+          .where('id user fav', isEqualTo: user?.uid)
+          .get();
+
+      setState(() {
+        favBook = querySnapshot.docs.isNotEmpty;
+      });
+    } catch (e) {
+      setState(() {
+        favBook = false;
+      });
+      print('Error: ${e.toString()}');
+    }
   }
 
   Future<void> _loadPreviousImage() async {
@@ -197,6 +285,28 @@ class _PinjamBukuState extends State<PinjamBuku> {
             size: 25,
           ),
         ),
+        actions: [
+          Padding(
+            padding: EdgeInsets.only(right: 10.0),
+            child: favBook
+                ? GestureDetector(
+                    onTap: _removeFavoriteBook,
+                    child: Icon(
+                      Icons.favorite,
+                      color: Colors.red,
+                      size: 30,
+                    ),
+                  )
+                : GestureDetector(
+                    onTap: _addFavoriteBook,
+                    child: Icon(
+                      Icons.favorite_border,
+                      color: Colors.grey,
+                      size: 30,
+                    ),
+                  ),
+          ),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
